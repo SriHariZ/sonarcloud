@@ -1,0 +1,38 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Build and Push Docker Image
+      env:
+        DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+      run: |
+        # To build the code using the dockerfile
+        docker build -t flux .
+
+        # To login to Dockerhub with username and access token
+        docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+
+        # setting the TAG and Image Name for further use. Here I have used Tag as 0.0.1, 0.0.2... (Optional)
+        TAG="0.0.${{ github.run_number }}"
+        IMAGE_NAME="srihariharan/fluxcd-paymentservice"
+
+        # Tagging the Docker image as the image name and the new tag since the image name will be flux while building
+        docker tag flux $IMAGE_NAME:$TAG
+
+        # Finally pushing the Docker image to Dockerhub
+        docker push $IMAGE_NAME:$TAG
